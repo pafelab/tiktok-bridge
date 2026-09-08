@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Black Swan — TikTok gift bridge</title>
+<link rel="icon" href="/image/black-swan.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Kanit:wght@300;400;500&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+:root {
+    --ink: #0d1119;
+    --panel: #161d2c;
+    --panel-2: #1d2739;
+    --line: #2a3346;
+    --gold: #c7a56b;
+    --gold-light: #f3dbab;
+    --ivory: #f6efe3;
+    --muted: #9aa0ac;
+    --green: #64c08a;
+    --amber: #e0b45f;
+    --red: #de7b6d;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    padding: 0 0 60px;
+    background: radial-gradient(1200px 600px at 20% -10%, #1c2740, transparent 60%), var(--ink);
+    color: var(--ivory);
+    font-family: 'Manrope', 'Kanit', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+}
+a { color: var(--gold-light); }
+
+header {
+    display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+    padding: 22px 28px; border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #1a2233, transparent);
+}
+.wordmark { display: flex; align-items: center; gap: 13px; }
+.wordmark img { width: 30px; height: 34px; }
+.wordmark b {
+    display: block; font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 22px; font-weight: 600; letter-spacing: 1.5px; line-height: 1.1;
+}
+.wordmark span { display: block; font-size: 8px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; }
+
+.pill {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 7px 16px 7px 13px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--panel);
+    font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.pill.live .dot { background: var(--green); box-shadow: 0 0 0 0 #64c08a99; animation: pulse 2s infinite; }
+.pill.live { color: var(--green); border-color: #64c08a44; }
+.pill.waiting .dot { background: var(--amber); }
+.pill.waiting { color: var(--amber); border-color: #e0b45f44; }
+.pill.down .dot { background: var(--red); }
+.pill.down { color: var(--red); border-color: #de7b6d44; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 9px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+main { max-width: 1180px; margin: 0 auto; padding: 26px 28px 0; display: grid; gap: 22px; grid-template-columns: 1fr 1fr; }
+.wide { grid-column: 1 / -1; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+.card {
+    border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
+    padding: 22px 24px; position: relative; overflow: hidden;
+}
+.card > h2 {
+    margin: 0 0 4px; font-size: 10px; letter-spacing: 2.6px; text-transform: uppercase;
+    color: var(--gold); font-weight: 600; font-family: 'Manrope', sans-serif;
+}
+.card > p.hint { margin: 0 0 18px; color: var(--muted); font-size: 12.5px; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 14px; margin-top: 16px; }
+.stat { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--panel-2); }
+.stat b { display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 27px; line-height: 1.15; color: var(--gold-light); font-variant-numeric: tabular-nums; }
+.stat span { display: block; font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+
+.urlrow { display: flex; gap: 10px; margin-top: 6px; }
+.urlrow input {
+    flex: 1; min-width: 0; padding: 11px 13px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--ink); color: var(--ivory);
+    font-family: ui-monospace, Consolas, monospace; font-size: 12.5px;
+}
+
+button {
+    font: inherit; font-weight: 600; font-size: 12.5px; cursor: pointer;
+    padding: 11px 18px; border-radius: 9px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--ivory); transition: border-color .15s, background .15s, transform .06s;
+}
+button:hover { border-color: #47536d; background: #232e44; }
+button:active { transform: translateY(1px); }
+button.gold { background: linear-gradient(180deg, #d9bb84, #b4914f); color: #241c0c; border-color: #d9bb8455; }
+button.gold:hover { background: linear-gradient(180deg, #e6cb99, #c19f5c); }
+button:disabled { opacity: .5; cursor: default; transform: none; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+.feed { max-height: 430px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.feed:empty::after { content: 'No gifts yet. Send a test gift, or wait for your LIVE.'; color: var(--muted); font-size: 12.5px; }
+.feed li {
+    display: flex; align-items: center; gap: 12px; padding: 11px 2px;
+    border-bottom: 1px solid #ffffff0d; animation: slidein .35s ease both;
+}
+.feed li:last-child { border-bottom: 0; }
+@keyframes slidein { from { opacity: 0; transform: translateY(-7px); } }
+.feed img.who { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--line); flex-shrink: 0; }
+.feed .noface { width: 32px; height: 32px; border-radius: 50%; background: var(--panel-2); border: 1px solid var(--line); flex-shrink: 0; }
+.feed .who-name { font-weight: 600; }
+.feed .who-gift { color: var(--muted); font-size: 12px; }
+.feed .grow { flex: 1; min-width: 0; }
+.feed .grow > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feed .coins { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 20px; color: var(--gold-light); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.feed .when { font-size: 10px; color: var(--muted); width: 58px; text-align: right; flex-shrink: 0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+label { display: block; }
+label > span { display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+label > em { display: block; font-style: normal; font-size: 11.5px; color: #757c8a; margin-top: 5px; line-height: 1.45; }
+input[type=text], input[type=number], select {
+    width: 100%; padding: 10px 12px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--ink); color: var(--ivory); font: inherit; font-size: 13px;
+}
+input:focus, select:focus { outline: none; border-color: var(--gold); }
+.check { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--ink); }
+.check input { width: 17px; height: 17px; accent-color: var(--gold); flex-shrink: 0; }
+.check span { font-size: 12.5px; letter-spacing: 0; text-transform: none; color: var(--ivory); margin: 0; }
+
+.note { margin-top: 16px; padding: 12px 14px; border-radius: 9px; border: 1px solid #c7a56b33; background: #c7a56b12; font-size: 12.5px; color: var(--gold-light); }
+.note.bad { border-color: #de7b6d44; background: #de7b6d14; color: #f0b6ac; }
+.note[hidden] { display: none; }
+
+footer { max-width: 1180px; margin: 26px auto 0; padding: 0 28px; color: var(--muted); font-size: 12px; }
+code { font-family: ui-monospace, Consolas, monospace; background: #ffffff0f; padding: 2px 6px; border-radius: 5px; font-size: 12px; }
+#toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 90px);
+    padding: 12px 22px; border-radius: 10px; border: 1px solid var(--line);
+    background: #202a3d; font-size: 13px; font-weight: 600; box-shadow: 0 12px 30px #0009;
+    transition: transform .3s cubic-bezier(.16,1,.3,1); z-index: 10;
+}
+#toast.up { transform: translate(-50%, 0); }
+#toast.bad { border-color: #de7b6d66; color: #f0b6ac; }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="wordmark">
+        <img src="/image/black-swan.svg" alt="">
+        <div><b>BLACK SWAN</b><span>TikTok gift bridge</span></div>
+    </div>
+    <div class="pill" id="pill"><i class="dot"></i><span id="pill-text">Starting…</span></div>
+</header>
+
+<main>
+    <section class="card">
+        <h2>Your stream</h2>
+        <p class="hint" id="watching">Connecting…</p>
+        <div class="stats">
+            <div class="stat"><b id="s-gifts">0</b><span>Gifts sent</span></div>
+            <div class="stat"><b id="s-overlays">0</b><span>Overlays open</span></div>
+            <div class="stat"><b id="s-uptime">—</b><span>Connected for</span></div>
+        </div>
+        <div class="actions">
+            <button class="gold" id="btn-test">Send a test gift</button>
+            <button id="btn-reconnect">Reconnect to TikTok</button>
+            <button id="btn-overlay">Open the overlay</button>
+        </div>
+        <div class="note bad" id="err" hidden></div>
+    </section>
+
+    <section class="card">
+        <h2>Recent gifts</h2>
+        <p class="hint">Newest first. This is what your viewers are seeing on screen.</p>
+        <ul class="feed" id="feed"></ul>
+    </section>
+
+    <section class="card wide">
+        <h2>Add it to OBS</h2>
+        <p class="hint">Add a <b>Browser</b> source, untick <b>Local file</b>, and paste this address.</p>
+        <div class="urlrow">
+            <input type="text" id="obs-url" readonly value="">
+            <button id="btn-copy">Copy</button>
+        </div>
+    </section>
+
+    <form class="card wide" id="settings">
+        <h2>Settings</h2>
+        <p class="hint">Everything except the port takes effect on the very next gift.</p>
+        <div class="grid">
+            <label><span>TikTok username</span>
+                <input type="text" name="tiktokUsername" autocomplete="off" spellcheck="false">
+                <em>The account you go live from, without the @.</em></label>
+
+            <label><span>Smallest gift to show</span>
+                <input type="number" name="minCoins" min="0" max="1000000" step="1">
+                <em>In coins. Set 10 to stop single Roses filling the screen.</em></label>
+
+            <label><span>Show the amount as</span>
+                <select name="amountMode">
+                    <option value="coins">TikTok coins</option>
+                    <option value="currency">Money</option>
+                </select>
+                <em>Coins is what your viewers actually spent.</em></label>
+
+            <label><span>Currency</span>
+                <input type="text" name="currency" maxlength="8" autocomplete="off">
+                <em>Only used when you show money.</em></label>
+
+            <label><span>One coin is worth</span>
+                <input type="number" name="coinValue" min="0" max="1000" step="0.01">
+                <em>In the currency above. Only used when you show money.</em></label>
+
+            <label><span>Card message</span>
+                <input type="text" name="messageTemplate" autocomplete="off">
+                <em>Used when the viewer wrote nothing. {gift} {count} {coins} {name}</em></label>
+
+            <label><span>Small line above the name</span>
+                <input type="text" name="eyebrowText" autocomplete="off">
+                <em>{gift} {count} {name} work here too.</em></label>
+
+            <label><span>How recent a comment counts</span>
+                <input type="number" name="recentCommentWindowSeconds" min="0" max="3600" step="5">
+                <em>In seconds, for the setting below.</em></label>
+
+            <label><span>Port</span>
+                <input type="number" name="port" min="1" max="65535" step="1">
+                <em>Change only if something else uses it. Needs a restart.</em></label>
+
+            <label><span>Euler Stream key</span>
+                <input type="text" name="signApiKey" autocomplete="off" spellcheck="false" placeholder="optional">
+                <em>A free key at eulerstream.com makes connecting more reliable.</em></label>
+
+            <label><span>Options</span>
+                <div class="check"><input type="checkbox" name="useRecentComment" id="c1"><span>Use the viewer's chat message on their card</span></div></label>
+
+            <label><span>&nbsp;</span>
+                <div class="check"><input type="checkbox" name="showGiftIcon" id="c2"><span>Show TikTok's gift picture</span></div></label>
+
+            <label><span>&nbsp;</span>
+                <div class="check"><input type="checkbox" name="openPanel" id="c3"><span>Open this panel when the app starts</span></div></label>
+        </div>
+        <div class="actions">
+            <button class="gold" type="submit" id="btn-save">Save settings</button>
+            <button type="button" id="btn-revert">Undo my changes</button>
+        </div>
+        <div class="note" id="saved" hidden></div>
+    </form>
+</main>
+
+<footer>
+    Building your own overlay design? Everything the bridge sends is written up in
+    <code>BUILDING-OVERLAYS.md</code>, and there is a small working example at
+    <a href="/examples/starter-overlay.html" target="_blank" rel="noopener">examples/starter-overlay.html</a>.
+</footer>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+    'use strict';
+
+    const $ = id => document.getElementById(id);
+    const form = $('settings');
+    const feed = $('feed');
+    let latest = null;
+    let dirty = false;
+
+    /* ---------------------------------------------------------------- helpers */
+
+    let toastTimer;
+    function toast(message, bad) {
+        const box = $('toast');
+        box.textContent = message;
+        box.classList.toggle('bad', !!bad);
+        box.classList.add('up');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => box.classList.remove('up'), 3200);
+    }
+
+    async function api(path, options) {
+        const response = await fetch(path, options);
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok || body.ok === false) throw new Error(body.error || ('Request failed (' + response.status + ')'));
+        return body;
+    }
+
+    function ago(iso) {
+        const seconds = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+        if (seconds < 60) return seconds + 's';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+        return Math.floor(seconds / 3600) + 'h ' + Math.floor((seconds % 3600) / 60) + 'm';
+    }
+
+    // Gift text comes from TikTok viewers, so it is only ever written as text.
+    function giftRow(gift) {
+        const row = document.createElement('li');
+        const face = document.createElement(gift.avatar ? 'img' : 'div');
+        face.className = gift.avatar ? 'who' : 'noface';
+        if (gift.avatar && /^https:\/\//i.test(gift.avatar)) {
+            face.src = gift.avatar;
+            face.alt = '';
+            face.addEventListener('error', () => face.replaceWith(Object.assign(document.createElement('div'), { className: 'noface' })));
+        }
+        const grow = document.createElement('div');
+        grow.className = 'grow';
+        const who = document.createElement('div');
+        who.className = 'who-name';
+        who.textContent = gift.name || 'A TikTok friend';
+        const what = document.createElement('div');
+        what.className = 'who-gift';
+        what.textContent = gift.message || gift.giftLine || '';
+        grow.append(who, what);
+        const coins = document.createElement('div');
+        coins.className = 'coins';
+        coins.textContent = gift.formatted_amount || '';
+        const when = document.createElement('div');
+        when.className = 'when';
+        when.textContent = gift.at ? ago(gift.at) : 'now';
+        row.append(face, grow, coins, when);
+        return row;
+    }
+
+    /* ------------------------------------------------------------------ state */
+
+    function paintStatus(state) {
+        const pill = $('pill');
+        const status = state.tiktok || {};
+        const live = status.connected;
+        const failing = !live && status.lastError;
+        pill.className = 'pill ' + (live ? 'live' : failing ? 'down' : 'waiting');
+        $('pill-text').textContent = live ? 'Connected' : failing ? 'Not connected' : 'Waiting for the LIVE';
+
+        $('watching').textContent = live
+            ? 'Watching @' + state.config.tiktokUsername + '. Gifts are going straight to your overlay.'
+            : 'Watching @' + state.config.tiktokUsername + '. It will connect by itself when the LIVE starts.';
+
+        $('s-gifts').textContent = state.giftsSent;
+        $('s-overlays').textContent = state.overlaysConnected;
+        $('s-uptime').textContent = live && status.since ? ago(status.since) : '—';
+
+        const err = $('err');
+        if (!live && status.lastError) {
+            err.textContent = status.lastError;
+            err.hidden = false;
+        } else {
+            err.hidden = true;
+        }
+
+        $('obs-url').value = state.overlayUrl;
+    }
+
+    function paintFeed(gifts) {
+        feed.replaceChildren(...gifts.slice(0, 25).map(giftRow));
+    }
+
+    function paintForm(config) {
+        for (const [key, value] of Object.entries(config)) {
+            const field = form.elements[key];
+            if (!field) continue;
+            if (field.type === 'checkbox') field.checked = !!value;
+            else field.value = value;
+        }
+        dirty = false;
+    }
+
+    async function refresh() {
+        try {
+            const state = await api('/api/state');
+            latest = state;
+            paintStatus(state);
+            paintFeed(state.gifts);
+            if (!dirty) paintForm(state.config);
+        } catch (error) {
+            $('pill').className = 'pill down';
+            $('pill-text').textContent = 'App not running';
+        }
+    }
+
+    /* ---------------------------------------------------------------- actions */
+
+    form.addEventListener('input', () => { dirty = true; });
+
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const wanted = {};
+        for (const field of form.elements) {
+            if (!field.name) continue;
+            if (field.type === 'checkbox') wanted[field.name] = field.checked;
+            else if (field.type === 'number') wanted[field.name] = Number(field.value);
+            else wanted[field.name] = field.value;
+        }
+        $('btn-save').disabled = true;
+        try {
+            const result = await api('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(wanted)
+            });
+            dirty = false;
+            paintForm(result.config);
+            const saved = $('saved');
+            if (result.restartNeeded) {
+                saved.textContent = 'Saved. The new port only takes effect after you close this window and run start.bat again — remember to update the OBS address too.';
+                saved.hidden = false;
+            } else if (result.reconnecting) {
+                saved.textContent = 'Saved. Reconnecting to TikTok with the new account…';
+                saved.hidden = false;
+            } else {
+                saved.hidden = true;
+            }
+            toast('Settings saved.');
+            refresh();
+        } catch (error) {
+            toast(error.message, true);
+        } finally {
+            $('btn-save').disabled = false;
+        }
+    });
+
+    $('btn-revert').addEventListener('click', () => {
+        if (latest) paintForm(latest.config);
+        $('saved').hidden = true;
+        toast('Back to your saved settings.');
+    });
+
+    $('btn-test').addEventListener('click', async () => {
+        try {
+            await api('/api/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+            toast('Test gift sent to the overlay.');
+        } catch (error) {
+            toast(error.message, true);
+        }
+    });
+
+    $('btn-reconnect').addEventListener('click', async () => {
+        try {
+            await api('/api/reconnect', { method: 'POST' });
+            toast('Reconnecting to TikTok…');
+            setTimeout(refresh, 1500);
+        } catch (error) {
+            toast(error.message, true);
+        }
+    });
+
+    $('btn-overlay').addEventListener('click', () => window.open('/overlay', '_blank', 'noopener'));
+
+    $('btn-copy').addEventListener('click', async () => {
+        const field = $('obs-url');
+        try {
+            await navigator.clipboard.writeText(field.value);
+        } catch {
+            field.select();
+            document.execCommand('copy');
+        }
+        toast('Address copied. Paste it into the OBS browser source.');
+    });
+
+    /* ------------------------------------------------------- live gift stream */
+
+    function listen() {
+        const socket = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/tiktok');
+        socket.addEventListener('message', event => {
+            let payload;
+            try { payload = JSON.parse(event.data); } catch { return; }
+            if (payload.type !== 'donation' || !payload.donation) return;
+            feed.prepend(giftRow({ ...payload.donation, at: new Date().toISOString() }));
+            while (feed.children.length > 25) feed.lastElementChild.remove();
+            const total = $('s-gifts');
+            total.textContent = Number(total.textContent || 0) + 1;
+        });
+        socket.addEventListener('close', () => setTimeout(listen, 2500));
+        socket.addEventListener('error', () => socket.close());
+    }
+
+    refresh();
+    listen();
+    setInterval(refresh, 3000);
+})();
+</script>
+</body>
+</html>
