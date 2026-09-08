@@ -11,8 +11,26 @@ before — the two run side by side.
    takes about a minute.
 3. It asks which TikTok account you stream from. Type your username (`@` optional)
    and press Enter. It remembers your answer in `config.json`.
+4. The **control panel** opens in your browser by itself.
 
-Leave that window open while you stream. It prints a line for every gift.
+Leave the black window open while you stream — closing it stops the gifts. Everything
+else you need is in the control panel.
+
+## The control panel
+
+It opens automatically at <http://localhost:8899/> every time you start the app. From
+there you can:
+
+- see whether TikTok is connected, and how many overlays are open
+- watch gifts arrive live, newest first
+- copy the OBS address with one click
+- send a test gift
+- change **every setting** without opening `config.json` — they save straight to that
+  file, and everything except the port applies to the very next gift
+
+If you would rather it did not open a browser each time, untick **Open this panel when
+the app starts** at the bottom of the settings. You can still reach it at the address
+above whenever you want.
 
 ## OBS
 
@@ -34,12 +52,16 @@ this page. The bridge window always prints the exact URL when it starts.
 
 ## Trying it before you go live
 
-- Press **T** in the bridge window for a test gift.
+- Press **Send a test gift** in the control panel. Easiest.
+- Or press **T** in the black bridge window.
 - Or open <http://localhost:8899/test> in a browser.
 - <http://localhost:8899/health> shows whether TikTok is connected and how many
   overlays are listening.
 
 You can shape the test: `/test?name=Nara&gift=Galaxy&count=1&coins=1000&message=hello`
+
+Test gifts ignore your minimum-coins setting, so the button always shows you something
+even when the minimum is high.
 
 Test gifts only work from an address you open yourself. If someone sends you a link to
 `/test`, clicking it does nothing — otherwise a viewer could put their own words on
@@ -61,8 +83,11 @@ your stream.
 | `eyebrowText` | `"TikTok gift"` | The small line above the name. |
 | `showGiftIcon` | `true` | Show TikTok's gift picture next to the amount. |
 | `signApiKey` | `""` | Optional Euler Stream key — see below. |
+| `openPanel` | `true` | Open the control panel in your browser when the app starts. |
 
-Save the file and restart the bridge for changes to take effect.
+The control panel is the easy way to change all of these. If you edit `config.json` by
+hand instead, save it and start the app again. Only `port` needs a restart when changed
+from the panel; everything else applies to the very next gift.
 
 ## Gift streaks
 
@@ -85,8 +110,12 @@ restart. This also makes connecting more reliable in general.
 number in the OBS URL.
 
 **Cards appear in the bridge window but not in OBS** — the overlay is not connected.
-Check `overlaysConnected` at <http://localhost:8899/health>. If it is `0`, refresh
-the browser source (Properties → OK) and confirm the URL and port match.
+Check **Overlays open** in the control panel. If it says `0`, refresh the browser source
+(Properties → OK) and confirm the address and port match. The panel does not count
+itself, so `0` really does mean OBS is not listening.
+
+**The panel does not open by itself** — check **Open this panel when the app starts** in
+the settings, and open <http://localhost:8899/> yourself in the meantime.
 
 **"Failed to retrieve Room ID"** — usually a typo in the username, or TikTok is
 blocking the unsigned connection. Check the spelling, then try a sign key.

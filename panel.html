@@ -63,7 +63,7 @@ header {
 .pill.down { color: var(--red); border-color: #de7b6d44; }
 @keyframes pulse { 70% { box-shadow: 0 0 0 9px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 
-main { max-width: 1180px; margin: 0 auto; padding: 26px 28px 0; display: grid; gap: 22px; grid-template-columns: 1fr 1fr; }
+main { max-width: 1180px; margin: 0 auto; padding: 26px 28px 0; display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .wide { grid-column: 1 / -1; }
 @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
 
@@ -464,7 +464,7 @@ code { font-family: ui-monospace, Consolas, monospace; background: #ffffff0f; pa
     /* ------------------------------------------------------- live gift stream */
 
     function listen() {
-        const socket = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/tiktok');
+        const socket = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/tiktok?panel=1');
         socket.addEventListener('message', event => {
             let payload;
             try { payload = JSON.parse(event.data); } catch { return; }
