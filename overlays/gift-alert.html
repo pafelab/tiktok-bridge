@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TikTok Live Gift Alert</title>
+  
+  <!-- Google Fonts: Montserrat, Outfit, Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800;900&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* Reset & Viewport Constraints */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: transparent;
+      font-family: 'Montserrat', 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 50px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Keyframe Animations */
+    @keyframes card-enter {
+      0% {
+        opacity: 0;
+        transform: translateY(-40px) scale(0.9);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes card-exit {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+      }
+    }
+
+    @keyframes gift-float {
+      0% {
+        transform: translateY(0px) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-6px) rotate(3deg);
+      }
+      100% {
+        transform: translateY(2px) rotate(-3deg);
+      }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% {
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 24px rgba(37, 244, 238, 0.25);
+      }
+      50% {
+        box-shadow: 0 8px 36px rgba(0, 0, 0, 0.6), 0 0 32px rgba(254, 44, 85, 0.35);
+      }
+    }
+
+    /* Card Container */
+    .alert-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 16px 24px;
+      min-width: 380px;
+      max-width: 620px;
+      border-radius: 24px;
+      
+      /* Neon Glassmorphism */
+      background: linear-gradient(rgba(15, 20, 30, 0.88), rgba(15, 20, 30, 0.88)) padding-box,
+                  linear-gradient(135deg, #25f4ee 0%, #fe2c55 50%, #25f4ee 100%) border-box;
+      border: 2px solid transparent;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 24px rgba(37, 244, 238, 0.25);
+      
+      /* Visibility state */
+      opacity: 0;
+      transform: translateY(-40px) scale(0.9);
+      pointer-events: none;
+      visibility: hidden;
+    }
+
+    .alert-card.visible,
+    .alert-card.active {
+      visibility: visible;
+      pointer-events: auto;
+      animation: card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+                 pulse-glow 3s ease-in-out infinite alternate;
+    }
+
+    .alert-card.exiting {
+      animation: card-exit 0.4s ease-in forwards !important;
+    }
+
+    /* 1. Left: Avatar Box */
+    .avatar-wrapper {
+      width: 64px;
+      height: 64px;
+      min-width: 64px;
+      border-radius: 50%;
+      padding: 2.5px;
+      background: linear-gradient(135deg, #25f4ee, #fe2c55);
+      box-shadow: 0 0 16px rgba(37, 244, 238, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .avatar-img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      background: #111827;
+    }
+
+    .avatar-svg-fallback {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #111827;
+      display: none;
+    }
+
+    /* 2. Center: Info Box */
+    .info-wrapper {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .eyebrow-badge {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #ffffff;
+      background: linear-gradient(90deg, #fe2c55, #25f4ee);
+      padding: 2px 8px;
+      border-radius: 10px;
+      width: fit-content;
+      box-shadow: 0 0 8px rgba(254, 44, 85, 0.4);
+      line-height: 1.3;
+    }
+
+    .gifter-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+    }
+
+    .gift-action {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      line-height: 1.2;
+    }
+
+    .sent-label {
+      color: #9ca3af;
+      font-weight: 500;
+    }
+
+    .gift-name-highlight {
+      color: #25f4ee;
+      font-weight: 800;
+      text-shadow: 0 0 10px rgba(37, 244, 238, 0.6);
+    }
+
+    .gift-message {
+      font-size: 13px;
+      font-style: italic;
+      color: #cbd5e1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 280px;
+      line-height: 1.3;
+    }
+
+    /* 3. Right: Badge & Icon Box */
+    .badge-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .gift-icon-container {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .gift-icon-img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+      animation: gift-float 2s ease-in-out infinite alternate;
+      display: block;
+    }
+
+    .gift-svg-fallback {
+      width: 52px;
+      height: 52px;
+      filter: drop-shadow(0 4px 12px rgba(254, 44, 85, 0.4));
+      animation: gift-float 2s ease-in-out infinite alternate;
+      display: none;
+    }
+
+    .multiplier-badge {
+      font-size: 13px;
+      font-weight: 800;
+      color: #ffffff;
+      background: linear-gradient(135deg, #fe2c55, #ff007f);
+      padding: 3px 10px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(254, 44, 85, 0.6);
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .coin-badge {
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffd700;
+      background: rgba(255, 215, 0, 0.15);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      padding: 2px 8px;
+      border-radius: 10px;
+      text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Alert Card Container -->
+  <div id="alert-card" class="alert-card">
+    <!-- Left: Avatar -->
+    <div class="avatar-wrapper">
+      <img id="avatar-img" class="avatar-img" alt="Gifter Avatar">
+      <svg id="avatar-fallback" class="avatar-svg-fallback" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="18" cy="12" r="7" fill="url(#avatar-grad)" />
+        <path d="M6 30C6 24.4772 11.3726 20 18 20C24.6274 20 30 24.4772 30 30" fill="url(#avatar-grad)" />
+        <defs>
+          <linearGradient id="avatar-grad" x1="6" y1="5" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#25f4ee"/>
+            <stop offset="1" stop-color="#fe2c55"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+
+    <!-- Center: Info -->
+    <div class="info-wrapper">
+      <div class="eyebrow-badge">TIKTOK GIFT</div>
+      <div id="gifter-name" class="gifter-name">Sarah_Live</div>
+      <div class="gift-action">
+        <span class="sent-label">sent</span>
+        <span id="gift-name" class="gift-name-highlight">Galaxy</span>
+      </div>
+      <div id="gift-message" class="gift-message">Galaxy ×1</div>
+    </div>
+
+    <!-- Right: Badge & Gift Icon -->
+    <div class="badge-wrapper">
+      <div class="gift-icon-container">
+        <img id="gift-img" class="gift-icon-img" alt="Gift Icon">
+        <svg id="gift-fallback" class="gift-svg-fallback" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="6" y="20" width="36" height="22" rx="4" fill="url(#gift-box-grad)"/>
+          <rect x="4" y="14" width="40" height="8" rx="3" fill="url(#gift-lid-grad)"/>
+          <path d="M21 14V42M27 14V42" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+          <path d="M24 14C21 8 13 8 16 14C19 14 24 14 24 14ZM24 14C27 8 35 8 32 14C29 14 24 14 24 14Z" fill="#25f4ee"/>
+          <defs>
+            <linearGradient id="gift-box-grad" x1="6" y1="20" x2="42" y2="42" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#fe2c55"/>
+              <stop offset="1" stop-color="#ff007f"/>
+            </linearGradient>
+            <linearGradient id="gift-lid-grad" x1="4" y1="14" x2="44" y2="22" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#ff3b69"/>
+              <stop offset="1" stop-color="#fe2c55"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div id="multiplier-badge" class="multiplier-badge">×1</div>
+      <div id="coin-badge" class="coin-badge">🪙 COINS 1,000</div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // Configuration & Query Parameter Handling
+    // ==========================================
+    const urlParams = new URLSearchParams(window.location.search);
+    const soundEnabled = urlParams.get('sound') !== '0' && urlParams.get('sound') !== 'false';
+    const volumeParam = parseFloat(urlParams.get('volume') ?? '0.4');
+    const volume = isNaN(volumeParam) ? 0.4 : Math.max(0, Math.min(1, volumeParam));
+    const customDuration = urlParams.get('duration') ? parseFloat(urlParams.get('duration')) * 1000 : null;
+
+    // DOM References
+    const cardEl = document.getElementById('alert-card');
+    const avatarImg = document.getElementById('avatar-img');
+    const avatarFallback = document.getElementById('avatar-fallback');
+    const gifterNameEl = document.getElementById('gifter-name');
+    const giftNameEl = document.getElementById('gift-name');
+    const giftMsgEl = document.getElementById('gift-message');
+    const giftImg = document.getElementById('gift-img');
+    const giftFallback = document.getElementById('gift-fallback');
+    const multiplierBadge = document.getElementById('multiplier-badge');
+    const coinBadge = document.getElementById('coin-badge');
+
+    // ==========================================
+    // Web Audio API Synthesizer (Zero-Dependency)
+    // ==========================================
+    let audioCtx = null;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    function playChime() {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(volume, now);
+        masterGain.connect(ctx.destination);
+
+        // Dual-tone crystal chime (C6 ~1046.5Hz and G6 ~1567.98Hz)
+        const tones = [
+          { freq: 1046.5, delay: 0 },
+          { freq: 1567.98, delay: 0.04 }
+        ];
+
+        tones.forEach(({ freq, delay }) => {
+          const osc = ctx.createOscillator();
+          const toneGain = ctx.createGain();
+
+          osc.type = 'sine';
+          const startTime = now + delay;
+          osc.frequency.setValueAtTime(freq, startTime);
+
+          // Envelope: attack 0.02s, decay 0.6s
+          toneGain.gain.setValueAtTime(0.0001, startTime);
+          toneGain.gain.exponentialRampToValueAtTime(0.5, startTime + 0.02);
+          toneGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.6);
+
+          osc.connect(toneGain);
+          toneGain.connect(masterGain);
+
+          osc.start(startTime);
+          osc.stop(startTime + 0.65);
+        });
+      } catch (err) {
+        console.warn('[TikTok Alert] Audio synthesis error:', err);
+      }
+    }
+
+    // ==========================================
+    // Alert Queue & Render Logic
+    // ==========================================
+    const queue = [];
+    let isPlaying = false;
+    let exitTimer = null;
+    let finishTimer = null;
+
+    function enqueueGift(donation) {
+      if (!donation) return;
+      queue.push(donation);
+      // Cap queue at 30 items to prevent overflow
+      if (queue.length > 30) {
+        queue.shift();
+      }
+      processQueue();
+    }
+
+    function renderDonation(donation) {
+      // 1. Gifter Name
+      gifterNameEl.textContent = donation.name || 'Anonymous';
+
+      // 2. Gift Name
+      const giftName = donation.giftName || 'Gift';
+      giftNameEl.textContent = giftName;
+
+      // 3. Avatar Image & Fallback
+      if (donation.avatar && typeof donation.avatar === 'string' && donation.avatar.trim() !== '') {
+        avatarImg.style.display = 'block';
+        avatarFallback.style.display = 'none';
+        avatarImg.onerror = () => {
+          avatarImg.style.display = 'none';
+          avatarFallback.style.display = 'block';
+        };
+        avatarImg.src = donation.avatar;
+      } else {
+        avatarImg.style.display = 'none';
+        avatarFallback.style.display = 'block';
+      }
+
+      // 4. Gift Icon Image & Fallback
+      if (donation.giftImage && typeof donation.giftImage === 'string' && donation.giftImage.trim() !== '') {
+        giftImg.style.display = 'block';
+        giftFallback.style.display = 'none';
+        giftImg.onerror = () => {
+          giftImg.style.display = 'none';
+          giftFallback.style.display = 'block';
+        };
+        giftImg.src = donation.giftImage;
+      } else {
+        giftImg.style.display = 'none';
+        giftFallback.style.display = 'block';
+      }
+
+      // 5. Multiplier Badge
+      const count = Math.max(1, Number(donation.giftCount) || 1);
+      multiplierBadge.textContent = `×${count}`;
+
+      // 6. Coin Badge
+      if (donation.formatted_amount) {
+        coinBadge.textContent = donation.formatted_amount.includes('🪙')
+          ? donation.formatted_amount
+          : `🪙 ${donation.formatted_amount}`;
+        coinBadge.style.display = 'inline-flex';
+      } else if (donation.giftCoins !== undefined && donation.giftCoins !== null && donation.giftCoins !== '') {
+        coinBadge.textContent = `🪙 ${Number(donation.giftCoins).toLocaleString()} COINS`;
+        coinBadge.style.display = 'inline-flex';
+      } else {
+        coinBadge.style.display = 'none';
+      }
+
+      // 7. Message / Comment (truncated to 120 chars)
+      const rawMsg = donation.message || `${giftName} ×${count}`;
+      const msg = String(rawMsg).slice(0, 120);
+      giftMsgEl.textContent = msg;
+      giftMsgEl.style.display = msg ? 'block' : 'none';
+    }
+
+    function processQueue() {
+      if (isPlaying || queue.length === 0) return;
+
+      const donation = queue.shift();
+      isPlaying = true;
+
+      // Normal 5000ms; if queue length > 4, compresses down to 3000ms
+      const duration = customDuration || (queue.length > 4 ? 3000 : 5000);
+
+      // Clear any prior pending timers
+      if (exitTimer) clearTimeout(exitTimer);
+      if (finishTimer) clearTimeout(finishTimer);
+
+      // Reset animation classes
+      cardEl.classList.remove('exiting');
+      void cardEl.offsetWidth; // Force CSS reflow
+
+      // Populate DOM
+      renderDonation(donation);
+
+      // Play audio chime
+      playChime();
+
+      // Show alert card
+      cardEl.classList.add('visible', 'active');
+
+      // At duration - 400ms, start exit animation
+      const exitDelay = Math.max(0, duration - 400);
+      exitTimer = setTimeout(() => {
+        cardEl.classList.add('exiting');
+      }, exitDelay);
+
+      // At duration, clean up and schedule next queue item
+      finishTimer = setTimeout(() => {
+        cardEl.classList.remove('visible', 'active', 'exiting');
+        isPlaying = false;
+        setTimeout(processQueue, 250);
+      }, duration);
+    }
+
+    // ==========================================
+    // WebSocket Connection & Auto-Reconnect
+    // ==========================================
+    let ws = null;
+    let reconnectTimer = null;
+
+    function connectWs() {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+
+      // Dynamic URL resolution:
+      // If file: or host is empty, target is ws://127.0.0.1:8899/tiktok
+      // Else target is (wss:// or ws://) + location.host + /tiktok
+      let wsUrl;
+      if (location.protocol === 'file:' || !location.host || location.host === '') {
+        wsUrl = 'ws://127.0.0.1:8899/tiktok';
+      } else {
+        const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${proto}//${location.host}/tiktok`;
+      }
+
+      console.log(`[TikTok Alert] Connecting to WebSocket: ${wsUrl}`);
+
+      try {
+        ws = new WebSocket(wsUrl);
+      } catch (err) {
+        console.warn('[TikTok Alert] WebSocket initialization error:', err);
+        scheduleReconnect();
+        return;
+      }
+
+      ws.onopen = () => {
+        console.log(`[TikTok Alert] Connected to ${wsUrl}`);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data && data.type === 'donation' && data.donation) {
+            enqueueGift(data.donation);
+          }
+        } catch (err) {
+          console.warn('[TikTok Alert] Error parsing incoming WebSocket message:', err);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('[TikTok Alert] WebSocket disconnected. Auto-reconnecting in 3s...');
+        scheduleReconnect();
+      };
+
+      ws.onerror = (err) => {
+        console.warn('[TikTok Alert] WebSocket encountered error:', err);
+        try {
+          ws.close();
+        } catch (_) {}
+      };
+    }
+
+    function scheduleReconnect() {
+      if (reconnectTimer) return;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        connectWs();
+      }, 3000);
+    }
+
+    // ==========================================
+    // Interactive & Testing Triggers
+    // ==========================================
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyT' || e.key === 't' || e.key === 'T') {
+        getAudioContext();
+        enqueueGift({
+          name: "Sarah_Live",
+          avatar: "",
+          giftName: "Galaxy",
+          giftCount: 1,
+          giftCoins: 1000,
+          giftImage: "",
+          formatted_amount: "COINS 1,000",
+          message: "Galaxy ×1"
+        });
+      }
+    });
+
+    // Ensure AudioContext is unlocked on first user interaction in OBS or browser
+    window.addEventListener('click', () => {
+      getAudioContext();
+    }, { once: true });
+
+    // Initialize WebSocket connection
+    connectWs();
+
+    // Expose helpers globally for automated inspection & testing
+    window.enqueueGift = enqueueGift;
+    window.processQueue = processQueue;
+    window.playChime = playChime;
+    window.getAudioContext = getAudioContext;
+    window.queue = queue;
+  </script>
+</body>
+</html>
