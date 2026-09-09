@@ -1,6 +1,6 @@
 {
-    "tiktokUsername": "polemarvse4",
-    "port": 8900,
+    "tiktokUsername": "",
+    "port": 8899,
     "minCoins": 1,
     "amountMode": "coins",
     "currency": "THB",

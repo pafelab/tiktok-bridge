@@ -25,6 +25,7 @@ there you can:
 - watch gifts arrive live, newest first
 - copy the OBS address with one click
 - send a test gift
+- bring in an overlay design of your own and watch it run before you keep it
 - change **every setting** without opening `config.json` — they save straight to that
   file, and everything except the port applies to the very next gift
 
@@ -49,6 +50,26 @@ because it survives OBS cache clears.
 
 If you changed `port` in `config.json`, use that number instead of 8899 everywhere on
 this page. The bridge window always prints the exact URL when it starts.
+
+## A design of your own
+
+You are not stuck with the Black Swan cards. Press **Import HTML** under **Your own
+design** and paste an HTML page into the box — or press **Simple template** next to it
+to start from a small design that already works. The preview shows your page running
+for real, on a checkerboard so you can see which parts are see-through. Send a
+test gift while it is open and the card appears in there too.
+
+Give it a name and save it. The page is kept in an **overlays** folder beside
+`donate board.html`, and the panel shows you the address to paste into OBS:
+
+```
+http://localhost:8899/overlays/your-design.html
+```
+
+Saving under a name you have used before replaces that design, and everything you have
+saved is listed with a way to delete it again. Writing a page from scratch, and every
+piece of gift information you can put on it, is covered in **BUILDING-OVERLAYS.md** in
+the folder above this one.
 
 ## Trying it before you go live
 
@@ -89,6 +110,11 @@ The control panel is the easy way to change all of these. If you edit `config.js
 hand instead, save it and start the app again. Only `port` needs a restart when changed
 from the panel; everything else applies to the very next gift.
 
+`config.json` is yours and is not part of this repository — it holds your username and,
+if you use one, your sign key. The app writes it the first time you run it.
+`config.example.json` shows every setting with its default, if you would rather start
+from a copy of that.
+
 ## Gift streaks
 
 TikTok sends one message per rose when someone taps a gift fifty times. The bridge
@@ -116,6 +142,11 @@ itself, so `0` really does mean OBS is not listening.
 
 **The panel does not open by itself** — check **Open this panel when the app starts** in
 the settings, and open <http://localhost:8899/> yourself in the meantime.
+
+**A design you imported shows nothing in OBS** — most overlays, including the ones here,
+stay empty until a gift arrives. Send a test gift with the browser source open. If
+**Overlays open** still says `0`, the address in OBS is not the `/overlays/…` one the
+panel shows.
 
 **"Failed to retrieve Room ID"** — usually a typo in the username, or TikTok is
 blocking the unsigned connection. Check the spelling, then try a sign key.

@@ -10,7 +10,7 @@
 
 import { createServer } from 'node:http';
 import { createReadStream } from 'node:fs';
-import { readFile, writeFile, stat } from 'node:fs/promises';
+import { readFile, writeFile, stat, mkdir, readdir, rename, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import readline from 'node:readline';
@@ -29,6 +29,17 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OVERLAY_ROOT = path.resolve(HERE, '..');
 const CONFIG_PATH = path.join(HERE, 'config.json');
 const OVERLAY_PAGE = '/donate%20board.html';
+// Imported designs sit beside the overlay page, so the static server already
+// reaches them and OBS can open one at http://localhost:<port>/overlays/<file>.
+const OVERLAYS_DIR = path.join(OVERLAY_ROOT, 'overlays');
+const PREVIEW_FILE = '_preview.html';
+
+// Windows and macOS open a file whatever case its name was typed in, so
+// /TIKTOK-BRIDGE/config.json and /tiktok-bridge/config.json are the same file to
+// them but different strings to us. Folder guards compare with the case folded
+// away there, or one shifted keystroke walks straight past them.
+const CASE_BLIND_FS = process.platform === 'win32' || process.platform === 'darwin';
+const forCompare = value => (CASE_BLIND_FS ? value.toLowerCase() : value);
 
 const DEFAULTS = {
     tiktokUsername: '',
@@ -459,18 +470,28 @@ async function serveFile(requestPath, response) {
     }
     // This folder holds config.json — including any sign key — and node_modules.
     // The overlay never needs anything from it, so it is never served.
-    if (target === HERE || target.startsWith(HERE + path.sep)) {
+    const inspected = forCompare(target);
+    if (inspected === forCompare(HERE) || inspected.startsWith(forCompare(HERE) + path.sep)) {
         response.writeHead(403).end('Forbidden');
         return;
     }
     try {
         const info = await stat(target);
         if (!info.isFile()) throw new Error('not a file');
-        response.writeHead(200, {
+        const headers = {
             'Content-Type': MIME[path.extname(target).toLowerCase()] || 'application/octet-stream',
             'Content-Length': info.size,
             'Cache-Control': 'no-store'
-        });
+        };
+        // An imported design is a page somebody else wrote. The panel already runs
+        // it inside a sandboxed frame; sending the same sandbox with the saved copy
+        // means a design that turns out to be unfriendly still cannot read anything
+        // else here — "donate board.html" holds a Streamlabs token. Scripts and the
+        // gift socket keep working, which is all an overlay ever needs.
+        if (inspected.startsWith(forCompare(OVERLAYS_DIR) + path.sep)) {
+            headers['Content-Security-Policy'] = 'sandbox allow-scripts';
+        }
+        response.writeHead(200, headers);
         // The headers are already out, so a read failure now can only be abandoned —
         // but it must be handled, or the stream takes the whole bridge down with it.
         const file = createReadStream(target);
@@ -501,13 +522,16 @@ function askedForByTheStreamer(request) {
     }
 }
 
-function readJsonBody(request) {
+function readJsonBody(request, limit = 20000) {
     return new Promise(resolve => {
         let body = '';
         let tooBig = false;
+        // A pasted page arrives in many chunks, and a chunk can end halfway through
+        // a Thai or emoji character. Decoding here instead of per chunk keeps it whole.
+        request.setEncoding('utf8');
         request.on('data', chunk => {
             body += chunk;
-            if (body.length > 20000) {
+            if (body.length > limit) {
                 tooBig = true;
                 request.destroy();
             }
@@ -527,6 +551,106 @@ function readJsonBody(request) {
 function sendJson(response, status, payload) {
     response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
     response.end(JSON.stringify(payload, null, 2));
+}
+
+/* ---------------------------------------------------------- overlay designs */
+
+// A whole web page, but not a video someone pasted by mistake.
+const MAX_OVERLAY_BYTES = 1000000;
+// JSON turns every quote and newline into two characters, so the body the panel
+// sends is always bigger than the page inside it. This leaves room for that.
+const MAX_OVERLAY_BODY = 4000000;
+
+// The preview and the save both read the same thing: one pasted page.
+async function readPastedPage(request) {
+    const body = await readJsonBody(request, MAX_OVERLAY_BODY);
+    if (!body) return { error: 'That design could not be read, and a page bigger than a few megabytes is the usual reason.' };
+    const html = typeof body.html === 'string' ? body.html : '';
+    if (!html.trim()) return { error: 'Paste the HTML for your design first.' };
+    // Thai is three bytes a character, so counting the text instead of the bytes
+    // would let through nearly three times the size the limit promises.
+    if (Buffer.byteLength(html, 'utf8') > MAX_OVERLAY_BYTES) {
+        return { error: 'That design is bigger than 1 MB, which is more than an overlay needs.' };
+    }
+    return { html, name: body.name };
+}
+
+const NAME_ALLOWED = /^[A-Za-z0-9 _-]+$/;
+// Windows still treats these as devices even with .html on the end, so writing
+// one would go to the console instead of to a file.
+const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+
+// Turn what the streamer typed into a file, or say why it cannot be one. The
+// name is also what the list shows, so both sides always agree on it.
+function toOverlayFile(raw) {
+    const name = String(raw ?? '').trim();
+    if (!name) return { error: 'Give the design a name before you save it.' };
+    if (!NAME_ALLOWED.test(name)) return { error: 'Names can only have letters, numbers, spaces, dashes and underscores.' };
+    if (name.length > 40) return { error: 'Keep the name to 40 characters or fewer.' };
+    const file = name.toLowerCase().replace(/ +/g, '-') + '.html';
+    // Checked on the finished file name, because _Preview and _preview both land here.
+    if (file === PREVIEW_FILE) return { error: 'The name _preview is kept for the live preview, so use a different one.' };
+    if (WINDOWS_RESERVED.test(path.basename(file, '.html'))) return { error: 'Windows keeps that name for itself, so use a different one.' };
+    const full = path.resolve(OVERLAYS_DIR, file);
+    // The name has already been checked, but nothing is written or deleted unless
+    // it lands straight inside the overlays folder.
+    if (path.dirname(full) !== OVERLAYS_DIR) return { error: 'That name cannot be turned into a file name.' };
+    return { name: path.basename(file, '.html'), file, full };
+}
+
+let tempCount = 0;
+
+// Write next to the real file and move it into place, so a failure halfway
+// through never leaves OBS loading half a page.
+async function writeOverlayFile(full, html) {
+    const temp = `${full}.${process.pid}.${tempCount += 1}.part`;
+    try {
+        await mkdir(OVERLAYS_DIR, { recursive: true });
+        await writeFile(temp, html, 'utf8');
+        await rename(temp, full);
+    } catch (error) {
+        try {
+            await rm(temp, { force: true });
+        } catch {
+            // Nothing to tidy up.
+        }
+        throw error;
+    }
+}
+
+async function listOverlays() {
+    let entries;
+    try {
+        entries = await readdir(OVERLAYS_DIR, { withFileTypes: true });
+    } catch {
+        // No folder yet just means nothing has been imported, which is fine.
+        return [];
+    }
+    const found = [];
+    for (const entry of entries) {
+        const file = entry.name;
+        if (!entry.isFile() || file === PREVIEW_FILE) continue;
+        if (path.extname(file).toLowerCase() !== '.html') continue;
+        let info;
+        try {
+            info = await stat(path.join(OVERLAYS_DIR, file));
+        } catch {
+            // Removed while we were looking. Leave it out.
+            continue;
+        }
+        found.push({
+            name: path.basename(file, path.extname(file)),
+            file,
+            // A file the streamer dropped in by hand can have spaces in its name.
+            url: `/overlays/${encodeURIComponent(file)}`,
+            bytes: info.size,
+            at: info.mtime.toISOString()
+        });
+    }
+    // Every stamp is a fixed-width UTC one, so comparing them as text is the
+    // same as comparing the times.
+    found.sort((a, b) => b.at.localeCompare(a.at) || a.file.localeCompare(b.file));
+    return found;
 }
 
 function createHttpServer(config, bridge) {
@@ -619,6 +743,86 @@ function createHttpServer(config, bridge) {
             }
             const result = await applySettings(config, bridge, body);
             sendJson(response, result.ok ? 200 : 400, result);
+            return;
+        }
+        if (route === '/api/overlays') {
+            sendJson(response, 200, { ok: true, overlays: await listOverlays() });
+            return;
+        }
+        if (route === '/api/overlay/preview' && request.method === 'POST') {
+            const page = await readPastedPage(request);
+            if (page.error) {
+                sendJson(response, 400, { ok: false, error: page.error });
+                return;
+            }
+            try {
+                await writeOverlayFile(path.join(OVERLAYS_DIR, PREVIEW_FILE), page.html);
+            } catch (error) {
+                sendJson(response, 400, { ok: false, error: `The preview could not be saved: ${error.message}` });
+                return;
+            }
+            sendJson(response, 200, { ok: true, url: `/overlays/${PREVIEW_FILE}` });
+            return;
+        }
+        if (route === '/api/overlay' && request.method === 'POST') {
+            const page = await readPastedPage(request);
+            if (page.error) {
+                sendJson(response, 400, { ok: false, error: page.error });
+                return;
+            }
+            const target = toOverlayFile(page.name);
+            if (target.error) {
+                sendJson(response, 400, { ok: false, error: target.error });
+                return;
+            }
+            try {
+                await writeOverlayFile(target.full, page.html);
+            } catch (error) {
+                sendJson(response, 400, { ok: false, error: `That design could not be saved: ${error.message}` });
+                return;
+            }
+            const info = await stat(target.full).catch(() => null);
+            say(`Saved the overlay design ${target.file}.`);
+            sendJson(response, 200, {
+                ok: true,
+                overlay: {
+                    name: target.name,
+                    file: target.file,
+                    url: `/overlays/${encodeURIComponent(target.file)}`,
+                    bytes: info ? info.size : Buffer.byteLength(page.html, 'utf8'),
+                    at: (info ? info.mtime : new Date()).toISOString()
+                }
+            });
+            return;
+        }
+        if (route === '/api/overlay/delete' && request.method === 'POST') {
+            const body = await readJsonBody(request);
+            if (!body) {
+                sendJson(response, 400, { ok: false, error: 'That request could not be read.' });
+                return;
+            }
+            // Remove has to take away the row the streamer pressed it on. Running
+            // the name back through the save box's rules would not: a file dropped
+            // into the folder by hand keeps its spaces and capitals, so it is
+            // listed under a name those rules would rewrite into a different file.
+            const wanted = String(body.name ?? '').trim();
+            const listed = (await listOverlays()).find(design => design.name === wanted || design.file === wanted);
+            const target = listed
+                ? { file: listed.file, full: path.resolve(OVERLAYS_DIR, listed.file) }
+                : toOverlayFile(wanted);
+            if (target.error) {
+                sendJson(response, 400, { ok: false, error: target.error });
+                return;
+            }
+            try {
+                // force also means a design that is already gone counts as removed.
+                await rm(target.full, { force: true });
+            } catch (error) {
+                sendJson(response, 400, { ok: false, error: `That design could not be removed: ${error.message}` });
+                return;
+            }
+            say(`Removed the overlay design ${target.file}.`);
+            sendJson(response, 200, { ok: true });
             return;
         }
 

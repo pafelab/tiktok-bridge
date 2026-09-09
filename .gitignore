@@ -7,6 +7,11 @@ package-lock.json
 .env.local
 .env.*.local
 
+# Your own settings, including signApiKey. Kept out of the repo so a key or a
+# username can never land in a public commit. config.example.json shows the
+# shape, and the app writes its own config.json the first time it runs.
+config.json
+
 # Logs
 logs/
 *.log
