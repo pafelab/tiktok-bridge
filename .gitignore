@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Your own settings, including signApiKey. Kept out of the repo so a key or a
+# username can never land in a public commit. config.example.json shows the
+# shape, and the app writes its own config.json the first time it runs.
+config.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data & temp files
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Scratch / Agent artifacts
+.superpowers/
+

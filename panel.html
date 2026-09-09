@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Black Swan — TikTok gift bridge</title>
+<link rel="icon" href="/image/black-swan.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Kanit:wght@300;400;500&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+:root {
+    --ink: #0d1119;
+    --panel: #161d2c;
+    --panel-2: #1d2739;
+    --line: #2a3346;
+    --gold: #c7a56b;
+    --gold-light: #f3dbab;
+    --ivory: #f6efe3;
+    --muted: #9aa0ac;
+    --green: #64c08a;
+    --amber: #e0b45f;
+    --red: #de7b6d;
+}
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    padding: 0 0 60px;
+    background: radial-gradient(1200px 600px at 20% -10%, #1c2740, transparent 60%), var(--ink);
+    color: var(--ivory);
+    font-family: 'Manrope', 'Kanit', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+}
+a { color: var(--gold-light); }
+
+header {
+    display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+    padding: 22px 28px; border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #1a2233, transparent);
+}
+.wordmark { display: flex; align-items: center; gap: 13px; }
+.wordmark img { width: 30px; height: 34px; }
+.wordmark b {
+    display: block; font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 22px; font-weight: 600; letter-spacing: 1.5px; line-height: 1.1;
+}
+.wordmark span { display: block; font-size: 8px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; }
+
+.pill {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 7px 16px 7px 13px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--panel);
+    font-size: 11px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+.pill.live .dot { background: var(--green); box-shadow: 0 0 0 0 #64c08a99; animation: pulse 2s infinite; }
+.pill.live { color: var(--green); border-color: #64c08a44; }
+.pill.waiting .dot { background: var(--amber); }
+.pill.waiting { color: var(--amber); border-color: #e0b45f44; }
+.pill.down .dot { background: var(--red); }
+.pill.down { color: var(--red); border-color: #de7b6d44; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 9px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+main { max-width: 1180px; margin: 0 auto; padding: 26px 28px 0; display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.wide { grid-column: 1 / -1; }
+@media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+.card {
+    border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
+    padding: 22px 24px; position: relative; overflow: hidden;
+}
+.card > h2 {
+    margin: 0 0 4px; font-size: 10px; letter-spacing: 2.6px; text-transform: uppercase;
+    color: var(--gold); font-weight: 600; font-family: 'Manrope', sans-serif;
+}
+.card > p.hint { margin: 0 0 18px; color: var(--muted); font-size: 12.5px; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 14px; margin-top: 16px; }
+.stat { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--panel-2); }
+.stat b { display: block; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 27px; line-height: 1.15; color: var(--gold-light); font-variant-numeric: tabular-nums; }
+.stat span { display: block; font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+
+.urlrow { display: flex; gap: 10px; margin-top: 6px; }
+.urlrow input {
+    flex: 1; min-width: 0; padding: 11px 13px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--ink); color: var(--ivory);
+    font-family: ui-monospace, Consolas, monospace; font-size: 12.5px;
+}
+
+button {
+    font: inherit; font-weight: 600; font-size: 12.5px; cursor: pointer;
+    padding: 11px 18px; border-radius: 9px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--ivory); transition: border-color .15s, background .15s, transform .06s;
+}
+button:hover { border-color: #47536d; background: #232e44; }
+button:active { transform: translateY(1px); }
+button.gold { background: linear-gradient(180deg, #d9bb84, #b4914f); color: #241c0c; border-color: #d9bb8455; }
+button.gold:hover { background: linear-gradient(180deg, #e6cb99, #c19f5c); }
+button:disabled { opacity: .5; cursor: default; transform: none; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+.feed { max-height: 430px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.feed:empty::after { content: 'No gifts yet. Send a test gift, or wait for your LIVE.'; color: var(--muted); font-size: 12.5px; }
+.feed li {
+    display: flex; align-items: center; gap: 12px; padding: 11px 2px;
+    border-bottom: 1px solid #ffffff0d; animation: slidein .35s ease both;
+}
+.feed li:last-child { border-bottom: 0; }
+@keyframes slidein { from { opacity: 0; transform: translateY(-7px); } }
+.feed img.who { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--line); flex-shrink: 0; }
+.feed .noface { width: 32px; height: 32px; border-radius: 50%; background: var(--panel-2); border: 1px solid var(--line); flex-shrink: 0; }
+.feed .who-name { font-weight: 600; }
+.feed .who-gift { color: var(--muted); font-size: 12px; }
+.feed .grow { flex: 1; min-width: 0; }
+.feed .grow > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feed .coins { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 20px; color: var(--gold-light); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.feed .when { font-size: 10px; color: var(--muted); width: 58px; text-align: right; flex-shrink: 0; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+label { display: block; }
+label > span { display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+label > em { display: block; font-style: normal; font-size: 11.5px; color: #757c8a; margin-top: 5px; line-height: 1.45; }
+input[type=text], input[type=number], select {
+    width: 100%; padding: 10px 12px; border-radius: 9px;
+    border: 1px solid var(--line); background: var(--ink); color: var(--ivory); font: inherit; font-size: 13px;
+}
+input:focus, select:focus { outline: none; border-color: var(--gold); }
+.check { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--ink); }
+.check input { width: 17px; height: 17px; accent-color: var(--gold); flex-shrink: 0; }
+.check span { font-size: 12.5px; letter-spacing: 0; text-transform: none; color: var(--ivory); margin: 0; }
+
+.note { margin-top: 16px; padding: 12px 14px; border-radius: 9px; border: 1px solid #c7a56b33; background: #c7a56b12; font-size: 12.5px; color: var(--gold-light); }
+.note.bad { border-color: #de7b6d44; background: #de7b6d14; color: #f0b6ac; }
+.note[hidden] { display: none; }
+
+.designs { margin: 18px 0 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.designs:empty::after { content: 'Nothing here yet. Import a page, or start from the simple template.'; color: var(--muted); font-size: 12.5px; }
+.designs li { border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; background: var(--panel-2); animation: slidein .35s ease both; }
+.designs .top { display: flex; align-items: baseline; gap: 12px; }
+.designs .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.designs .meta { margin-left: auto; white-space: nowrap; font-size: 9.5px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); }
+.designs .urlrow { flex-wrap: wrap; margin-top: 10px; }
+.designs .urlrow input { min-width: 220px; }
+.designs .urlrow button { padding: 9px 14px; font-size: 12px; }
+
+.sheet { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.sheet[hidden] { display: none; }                     /* .sheet sets display, so hidden needs saying */
+.sheet-back { position: absolute; inset: 0; background: #070a11cc; }
+.sheet-box { z-index: 1; width: min(1120px, 100%); max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 24px 60px #0009; }
+.sheet-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 16px; }
+.sheet-side { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.sheet label.tall { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.sheet textarea {
+    flex: 1; min-height: 150px; width: 100%; resize: none;
+    padding: 12px 13px; border-radius: 9px; border: 1px solid var(--line);
+    background: var(--ink); color: var(--ivory);
+    font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; line-height: 1.5;
+}
+.sheet textarea:focus { outline: none; border-color: var(--gold); }
+.sheet textarea.dropping { border-color: var(--gold); background: #c7a56b12; }
+.filerow { display: flex; align-items: center; gap: 12px; }
+.tiny { margin: 0; font-size: 11.5px; color: #757c8a; line-height: 1.45; }
+.preview {
+    position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+    border: 1px solid var(--line); border-radius: 10px;
+    background-color: #232c3d;
+    background-image: linear-gradient(45deg, #1a2130 25%, transparent 25%, transparent 75%, #1a2130 75%),
+                      linear-gradient(45deg, #1a2130 25%, transparent 25%, transparent 75%, #1a2130 75%);
+    background-size: 22px 22px; background-position: 0 0, 11px 11px;
+}
+.preview iframe { position: absolute; top: 0; left: 0; width: 1280px; height: 720px; border: 0; background: transparent; transform-origin: top left; }
+.preview.empty::after { content: 'Press Preview to see your design here.'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12.5px; }
+.sheet .actions .close { margin-left: auto; }
+@media (max-width: 900px) {
+    .sheet { padding: 12px; }
+    .sheet-box { max-height: 94vh; overflow-y: auto; }
+    .sheet-body { grid-template-columns: 1fr; grid-template-rows: auto; }
+    .sheet textarea { min-height: 200px; }
+}
+
+footer { max-width: 1180px; margin: 26px auto 0; padding: 0 28px; color: var(--muted); font-size: 12px; }
+code { font-family: ui-monospace, Consolas, monospace; background: #ffffff0f; padding: 2px 6px; border-radius: 5px; font-size: 12px; }
+#toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 90px);
+    padding: 12px 22px; border-radius: 10px; border: 1px solid var(--line);
+    background: #202a3d; font-size: 13px; font-weight: 600; box-shadow: 0 12px 30px #0009;
+    transition: transform .3s cubic-bezier(.16,1,.3,1); z-index: 30;
+}
+#toast.up { transform: translate(-50%, 0); }
+#toast.bad { border-color: #de7b6d66; color: #f0b6ac; }
+</style>
+</head>
+<body>
+
+<header>
+    <div class="wordmark">
+        <img src="/image/black-swan.svg" alt="">
+        <div><b>BLACK SWAN</b><span>TikTok gift bridge</span></div>
+    </div>
+    <div class="pill" id="pill"><i class="dot"></i><span id="pill-text">Starting…</span></div>
+</header>
+
+<main>
+    <section class="card">
+        <h2>Your stream</h2>
+        <p class="hint" id="watching">Connecting…</p>
+        <div class="stats">
+            <div class="stat"><b id="s-gifts">0</b><span>Gifts sent</span></div>
+            <div class="stat"><b id="s-overlays">0</b><span>Overlays open</span></div>
+            <div class="stat"><b id="s-uptime">—</b><span>Connected for</span></div>
+        </div>
+        <div class="actions">
+            <button class="gold" id="btn-test">Send a test gift</button>
+            <button id="btn-reconnect">Reconnect to TikTok</button>
+            <button id="btn-overlay">Open the overlay</button>
+        </div>
+        <div class="note bad" id="err" hidden></div>
+    </section>
+
+    <section class="card">
+        <h2>Recent gifts</h2>
+        <p class="hint">Newest first. This is what your viewers are seeing on screen.</p>
+        <ul class="feed" id="feed"></ul>
+    </section>
+
+    <section class="card wide">
+        <h2>Add it to OBS</h2>
+        <p class="hint">Add a <b>Browser</b> source, untick <b>Local file</b>, and paste this address.</p>
+        <div class="urlrow">
+            <input type="text" id="obs-url" readonly value="">
+            <button id="btn-copy">Copy</button>
+        </div>
+    </section>
+
+    <section class="card wide">
+        <h2>Your own design</h2>
+        <p class="hint">Bring in a page you made yourself. It gets its own address you can add to OBS.</p>
+        <div class="actions">
+            <button class="gold" id="btn-import">Import HTML</button>
+            <button id="btn-template">Simple template</button>
+        </div>
+        <ul class="designs" id="design-list"></ul>
+    </section>
+
+    <form class="card wide" id="settings">
+        <h2>Settings</h2>
+        <p class="hint">Everything except the port takes effect on the very next gift.</p>
+        <div class="grid">
+            <label><span>TikTok username</span>
+                <input type="text" name="tiktokUsername" autocomplete="off" spellcheck="false">
+                <em>The account you go live from, without the @.</em></label>
+
+            <label><span>Smallest gift to show</span>
+                <input type="number" name="minCoins" min="0" max="1000000" step="1">
+                <em>In coins. Set 10 to stop single Roses filling the screen.</em></label>
+
+            <label><span>Show the amount as</span>
+                <select name="amountMode">
+                    <option value="coins">TikTok coins</option>
+                    <option value="currency">Money</option>
+                </select>
+                <em>Coins is what your viewers actually spent.</em></label>
+
+            <label><span>Currency</span>
+                <input type="text" name="currency" maxlength="8" autocomplete="off">
+                <em>Only used when you show money.</em></label>
+
+            <label><span>One coin is worth</span>
+                <input type="number" name="coinValue" min="0" max="1000" step="0.01">
+                <em>In the currency above. Only used when you show money.</em></label>
+
+            <label><span>Card message</span>
+                <input type="text" name="messageTemplate" autocomplete="off">
+                <em>Used when the viewer wrote nothing. {gift} {count} {coins} {name}</em></label>
+
+            <label><span>Small line above the name</span>
+                <input type="text" name="eyebrowText" autocomplete="off">
+                <em>{gift} {count} {name} work here too.</em></label>
+
+            <label><span>How recent a comment counts</span>
+                <input type="number" name="recentCommentWindowSeconds" min="0" max="3600" step="5">
+                <em>In seconds, for the setting below.</em></label>
+
+            <label><span>Port</span>
+                <input type="number" name="port" min="1" max="65535" step="1">
+                <em>Change only if something else uses it. Needs a restart.</em></label>
+
+            <label><span>Euler Stream key</span>
+                <input type="text" name="signApiKey" autocomplete="off" spellcheck="false" placeholder="optional">
+                <em>A free key at eulerstream.com makes connecting more reliable.</em></label>
+
+            <label><span>Options</span>
+                <div class="check"><input type="checkbox" name="useRecentComment" id="c1"><span>Use the viewer's chat message on their card</span></div></label>
+
+            <label><span>&nbsp;</span>
+                <div class="check"><input type="checkbox" name="showGiftIcon" id="c2"><span>Show TikTok's gift picture</span></div></label>
+
+            <label><span>&nbsp;</span>
+                <div class="check"><input type="checkbox" name="openPanel" id="c3"><span>Open this panel when the app starts</span></div></label>
+        </div>
+        <div class="actions">
+            <button class="gold" type="submit" id="btn-save">Save settings</button>
+            <button type="button" id="btn-revert">Undo my changes</button>
+        </div>
+        <div class="note" id="saved" hidden></div>
+    </form>
+</main>
+
+<div class="sheet" id="sheet" hidden>
+    <div class="sheet-back" id="sheet-back"></div>
+    <form class="card sheet-box" id="import" role="dialog" aria-modal="true" aria-labelledby="import-title">
+        <h2 id="import-title">Import a design</h2>
+        <p class="hint">Paste your page in, look at it, then save it. Nothing reaches your stream until you add its address to OBS.</p>
+        <div class="sheet-body">
+            <div class="sheet-side">
+                <label><span>Name</span>
+                    <input type="text" id="import-name" autocomplete="off" spellcheck="false" maxlength="40">
+                    <em>Letters, numbers, spaces, - and _. This becomes the file name.</em></label>
+                <label class="tall"><span>Your page</span>
+                    <textarea id="import-html" spellcheck="false" autocomplete="off"></textarea></label>
+                <div class="filerow">
+                    <button type="button" id="btn-file">Choose a file</button>
+                    <p class="tiny">Or drop an .html file straight onto the box.</p>
+                </div>
+                <input type="file" id="import-file" accept=".html,.htm,text/html" tabindex="-1" aria-hidden="true" hidden>
+            </div>
+            <div class="sheet-side">
+                <div class="preview empty" id="preview">
+                    <iframe id="preview-frame" sandbox="allow-scripts" title="Your design, running"></iframe>
+                </div>
+                <p class="tiny">Shown at 1280 by 720, running for real. A test gift shows up here and on any overlay you have open.</p>
+                <div class="urlrow" id="saved-row" hidden>
+                    <input type="text" id="saved-url" readonly value="">
+                    <button type="button" id="btn-saved-copy">Copy</button>
+                </div>
+            </div>
+        </div>
+        <div class="actions">
+            <button class="gold" type="submit" id="btn-design-save">Save design</button>
+            <button type="button" id="btn-preview">Preview</button>
+            <button type="button" id="btn-sheet-test">Send a test gift</button>
+            <button type="button" class="close" id="btn-sheet-close">Close</button>
+        </div>
+        <div class="note bad" id="import-err" hidden></div>
+    </form>
+</div>
+
+<footer>
+    Building your own overlay design? Everything the bridge sends is written up in
+    <code>BUILDING-OVERLAYS.md</code>, and there is a small working example at
+    <a href="/examples/starter-overlay.html" target="_blank" rel="noopener">examples/starter-overlay.html</a>.
+</footer>
+
+<div id="toast"></div>
+
+<script>
+(() => {
+    'use strict';
+
+    const $ = id => document.getElementById(id);
+    const form = $('settings');
+    const feed = $('feed');
+    let latest = null;
+    let dirty = false;
+    const sheet = $('sheet');
+    const htmlBox = $('import-html');
+    const designList = $('design-list');
+    let designs = [];         // what the bridge last told us is saved
+    let sheetReturn = null;   // the button that opened the modal, to give focus back
+    let sheetSaved = '';      // the HTML already on disk, to spot an unsaved draft
+    let sheetSavedName = '';  // the design the box came from, so saving it again asks nothing
+    let lastPreview = '';     // last previewed address, so reopening shows it again
+
+    /* ---------------------------------------------------------------- helpers */
+
+    let toastTimer;
+    function toast(message, bad) {
+        const box = $('toast');
+        box.textContent = message;
+        box.classList.toggle('bad', !!bad);
+        box.classList.add('up');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => box.classList.remove('up'), 3200);
+    }
+
+    async function api(path, options) {
+        const response = await fetch(path, options);
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok || body.ok === false) throw new Error(body.error || ('Request failed (' + response.status + ')'));
+        return body;
+    }
+
+    function ago(iso) {
+        const seconds = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+        if (seconds < 60) return seconds + 's';
+        if (seconds < 3600) return Math.floor(seconds / 60) + 'm';
+        return Math.floor(seconds / 3600) + 'h ' + Math.floor((seconds % 3600) / 60) + 'm';
+    }
+
+    // Gift text comes from TikTok viewers, so it is only ever written as text.
+    function giftRow(gift) {
+        const row = document.createElement('li');
+        const face = document.createElement(gift.avatar ? 'img' : 'div');
+        face.className = gift.avatar ? 'who' : 'noface';
+        if (gift.avatar && /^https:\/\//i.test(gift.avatar)) {
+            face.src = gift.avatar;
+            face.alt = '';
+            face.addEventListener('error', () => face.replaceWith(Object.assign(document.createElement('div'), { className: 'noface' })));
+        }
+        const grow = document.createElement('div');
+        grow.className = 'grow';
+        const who = document.createElement('div');
+        who.className = 'who-name';
+        who.textContent = gift.name || 'A TikTok friend';
+        const what = document.createElement('div');
+        what.className = 'who-gift';
+        what.textContent = gift.message || gift.giftLine || '';
+        grow.append(who, what);
+        const coins = document.createElement('div');
+        coins.className = 'coins';
+        coins.textContent = gift.formatted_amount || '';
+        const when = document.createElement('div');
+        when.className = 'when';
+        when.textContent = gift.at ? ago(gift.at) : 'now';
+        row.append(face, grow, coins, when);
+        return row;
+    }
+
+    const NAME_OK = /^[A-Za-z0-9 _-]{1,40}$/;
+    const MOST_BYTES = 1000000;
+
+    function sizeOf(bytes) {
+        return bytes < 1024 ? bytes + ' bytes' : Math.round(bytes / 1024) + ' KB';
+    }
+
+    // Both address boxes copy the same way, and both fall back for browsers
+    // that will not hand over the clipboard.
+    async function copyField(field) {
+        try {
+            await navigator.clipboard.writeText(field.value);
+        } catch {
+            field.select();
+            document.execCommand('copy');
+        }
+        toast('Address copied. Paste it into the OBS browser source.');
+    }
+
+    // A button that is waiting on the bridge goes dead, so a second press
+    // cannot send the same thing twice.
+    async function busy(button, work, fail) {
+        button.disabled = true;
+        try {
+            await work();
+        } catch (error) {
+            (fail || (message => toast(message, true)))(error.message);
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    function rowButton(text, onClick) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = text;
+        button.addEventListener('click', onClick);
+        return button;
+    }
+
+    /* ------------------------------------------------------------------ state */
+
+    function paintStatus(state) {
+        const pill = $('pill');
+        const status = state.tiktok || {};
+        const live = status.connected;
+        const failing = !live && status.lastError;
+        pill.className = 'pill ' + (live ? 'live' : failing ? 'down' : 'waiting');
+        $('pill-text').textContent = live ? 'Connected' : failing ? 'Not connected' : 'Waiting for the LIVE';
+
+        $('watching').textContent = live
+            ? 'Watching @' + state.config.tiktokUsername + '. Gifts are going straight to your overlay.'
+            : 'Watching @' + state.config.tiktokUsername + '. It will connect by itself when the LIVE starts.';
+
+        $('s-gifts').textContent = state.giftsSent;
+        $('s-overlays').textContent = state.overlaysConnected;
+        $('s-uptime').textContent = live && status.since ? ago(status.since) : '—';
+
+        const err = $('err');
+        if (!live && status.lastError) {
+            err.textContent = status.lastError;
+            err.hidden = false;
+        } else {
+            err.hidden = true;
+        }
+
+        $('obs-url').value = state.overlayUrl;
+    }
+
+    function paintFeed(gifts) {
+        feed.replaceChildren(...gifts.slice(0, 25).map(giftRow));
+    }
+
+    function paintForm(config) {
+        for (const [key, value] of Object.entries(config)) {
+            const field = form.elements[key];
+            if (!field) continue;
+            if (field.type === 'checkbox') field.checked = !!value;
+            else field.value = value;
+        }
+        dirty = false;
+    }
+
+    async function refresh() {
+        try {
+            const state = await api('/api/state');
+            latest = state;
+            paintStatus(state);
+            paintFeed(state.gifts);
+            if (!dirty) paintForm(state.config);
+        } catch (error) {
+            $('pill').className = 'pill down';
+            $('pill-text').textContent = 'App not running';
+        }
+    }
+
+    /* ---------------------------------------------------------------- actions */
+
+    form.addEventListener('input', () => { dirty = true; });
+
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const wanted = {};
+        for (const field of form.elements) {
+            if (!field.name) continue;
+            if (field.type === 'checkbox') wanted[field.name] = field.checked;
+            else if (field.type === 'number') wanted[field.name] = Number(field.value);
+            else wanted[field.name] = field.value;
+        }
+        $('btn-save').disabled = true;
+        try {
+            const result = await api('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(wanted)
+            });
+            dirty = false;
+            paintForm(result.config);
+            const saved = $('saved');
+            if (result.restartNeeded) {
+                saved.textContent = 'Saved. The new port only takes effect after you close this window and run start.bat again — remember to update the OBS address too.';
+                saved.hidden = false;
+            } else if (result.reconnecting) {
+                saved.textContent = 'Saved. Reconnecting to TikTok with the new account…';
+                saved.hidden = false;
+            } else {
+                saved.hidden = true;
+            }
+            toast('Settings saved.');
+            refresh();
+        } catch (error) {
+            toast(error.message, true);
+        } finally {
+            $('btn-save').disabled = false;
+        }
+    });
+
+    $('btn-revert').addEventListener('click', () => {
+        if (latest) paintForm(latest.config);
+        $('saved').hidden = true;
+        toast('Back to your saved settings.');
+    });
+
+    $('btn-test').addEventListener('click', async () => {
+        try {
+            await api('/api/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+            toast('Test gift sent to the overlay.');
+        } catch (error) {
+            toast(error.message, true);
+        }
+    });
+
+    $('btn-reconnect').addEventListener('click', async () => {
+        try {
+            await api('/api/reconnect', { method: 'POST' });
+            toast('Reconnecting to TikTok…');
+            setTimeout(refresh, 1500);
+        } catch (error) {
+            toast(error.message, true);
+        }
+    });
+
+    $('btn-overlay').addEventListener('click', () => window.open('/overlay', '_blank', 'noopener'));
+
+    $('btn-copy').addEventListener('click', () => copyField($('obs-url')));
+
+    /* ----------------------------------------------------------- your designs */
+
+    // Every write down here sends JSON the same way.
+    function post(payload) {
+        return { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
+    }
+
+    // The bridge hands back a path, so the address is built from the same origin
+    // the OBS box already shows.
+    function overlayAddress(url) {
+        if (/^https?:\/\//i.test(url)) return url;
+        const base = latest && latest.overlayUrl ? new URL(latest.overlayUrl).origin : location.origin;
+        return base + url;
+    }
+
+    // The name came off the streamer's own disk, but it still only ever goes in
+    // as text — nothing here is built out of a string of HTML.
+    function designRow(design) {
+        const row = document.createElement('li');
+
+        const top = document.createElement('div');
+        top.className = 'top';
+        const name = document.createElement('div');
+        name.className = 'name';
+        name.textContent = design.name;
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = sizeOf(design.bytes) + ' · saved ' + ago(design.at) + ' ago';
+        top.append(name, meta);
+
+        const address = document.createElement('input');
+        address.type = 'text';
+        address.readOnly = true;
+        address.value = overlayAddress(design.url);
+        address.setAttribute('aria-label', 'OBS address for ' + design.name);
+
+        const copyButton = rowButton('Copy', () => busy(copyButton, () => copyField(address)));
+        const previewButton = rowButton('Preview', () => openDesign(design, previewButton));
+        const removeButton = rowButton('Remove', () => {
+            if (!confirm('Remove ' + design.name + '? Its OBS address stops working.')) return;
+            busy(removeButton, async () => {
+                await api('/api/overlay/delete', post({ name: design.name }));
+                toast('Removed. Take its address out of OBS as well.');
+                await loadDesigns();
+            });
+        });
+
+        const urlrow = document.createElement('div');
+        urlrow.className = 'urlrow';
+        urlrow.append(address, copyButton, previewButton, removeButton);
+
+        row.append(top, urlrow);
+        return row;
+    }
+
+    // Deliberately kept off the 3-second refresh: a repaint on a timer would rebuild
+    // a row under the streamer's pointer and revive a button still waiting on the bridge.
+    async function loadDesigns() {
+        try {
+            const body = await api('/api/overlays');
+            designs = body.overlays || [];
+        } catch (error) {
+            // The list is a nicety; losing it must not take the rest of the panel with it.
+            designs = [];
+        }
+        designList.replaceChildren(...designs.map(designRow));
+    }
+
+    const page = [document.querySelector('header'), document.querySelector('main'), document.querySelector('footer')];
+
+    function openSheet(opener) {
+        sheetReturn = opener;
+        sheetError('');
+        sheet.hidden = false;
+        // The page behind must not scroll or take the keyboard while this is up.
+        document.body.style.overflow = 'hidden';
+        for (const part of page) part.inert = true;
+        document.addEventListener('keydown', onSheetKey);
+        if (lastPreview) showPreview(lastPreview);
+        fitPreview();
+        $('import-name').focus();
+    }
+
+    function closeSheet() {
+        sheet.hidden = true;
+        document.body.style.overflow = '';
+        for (const part of page) part.inert = false;
+        document.removeEventListener('keydown', onSheetKey);
+        // A hidden preview would otherwise keep its connection and its animations
+        // running for the rest of the stream.
+        $('preview-frame').src = 'about:blank';
+        $('preview').classList.add('empty');
+        if (sheetReturn && sheetReturn.isConnected) sheetReturn.focus();
+    }
+
+    function onSheetKey(event) {
+        if (event.key === 'Escape') closeSheet();
+    }
+
+    // Trouble inside the modal belongs next to the fields it is about; anything
+    // that went right still goes to the toast, like everywhere else in the panel.
+    function sheetError(message) {
+        const note = $('import-err');
+        note.textContent = message;
+        note.hidden = !message;
+    }
+
+    function fitPreview() {
+        // The frame is a real 1280x720 page shrunk to fit, so a design lands where
+        // it will land in OBS instead of being cropped by a small box.
+        $('preview-frame').style.transform = 'scale(' + ($('preview').clientWidth / 1280) + ')';
+    }
+
+    function showPreview(url) {
+        lastPreview = url;
+        // The window can be shut while the bridge is still answering. A frame in a
+        // hidden window still loads, and it would sit there holding a gift socket
+        // nobody can see, counted in "Overlays open" for the rest of the stream.
+        if (sheet.hidden) return;
+        $('preview').classList.remove('empty');
+        // A fresh query every time, or the frame keeps showing the last one.
+        $('preview-frame').src = url + '?v=' + Date.now();
+        fitPreview();
+    }
+
+    function tooBig(html) {
+        // length counts characters, and the bridge counts bytes.
+        return new TextEncoder().encode(html).length > MOST_BYTES;
+    }
+
+    async function previewNow(button) {
+        const html = htmlBox.value;
+        if (!html.trim()) {
+            sheetError('Paste your page into the box first, or press Simple template.');
+            return;
+        }
+        if (tooBig(html)) {
+            sheetError('That page is over 1 MB, which is too big to save.');
+            return;
+        }
+        await busy(button, async () => {
+            const body = await api('/api/overlay/preview', post({ html }));
+            sheetError('');
+            showPreview(body.url);
+        }, sheetError);
+    }
+
+    function confirmReplace() {
+        const text = htmlBox.value;
+        return !text.trim() || text === sheetSaved || confirm('Replace what is in the box?');
+    }
+
+    function suggestName(fileName) {
+        return fileName.replace(/\.html?$/i, '').replace(/[^A-Za-z0-9 _-]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
+    }
+
+    async function fillFrom(text, name, button) {
+        htmlBox.value = text;
+        if (name && !$('import-name').value.trim()) $('import-name').value = name;
+        sheetSaved = '';
+        // The box is a different design now, so saving must ask again before it
+        // lands on top of the one that was saved a moment ago.
+        sheetSavedName = '';
+        await previewNow(button);
+    }
+
+    async function loadTemplate(button) {
+        if (!confirmReplace()) return;
+        await busy(button, async () => {
+            const response = await fetch('/examples/simple-template.html', { cache: 'no-store' });
+            if (!response.ok) throw new Error('The example could not be loaded. Check that examples/simple-template.html is still in your folder.');
+            await fillFrom(await response.text(), 'Simple template', button);
+        }, sheetError);
+    }
+
+    async function readFile(file) {
+        if (!file) return;
+        if (!/\.html?$/i.test(file.name)) {
+            sheetError('That needs to be an .html file.');
+            return;
+        }
+        if (file.size > MOST_BYTES) {
+            sheetError('That page is over 1 MB, which is too big to save.');
+            return;
+        }
+        if (!confirmReplace()) return;
+        try {
+            await fillFrom(await file.text(), suggestName(file.name), $('btn-preview'));
+        } catch (error) {
+            sheetError('That file could not be read.');
+        }
+    }
+
+    // Puts a design that is already saved back in the box, so it can be looked at,
+    // changed and saved again under the same name.
+    async function openDesign(design, opener) {
+        if (!sheet.hidden && !confirmReplace()) return;
+        openSheet(opener);
+        $('import-name').value = design.name;
+        sheetSavedName = design.name;
+        showPreview(design.url);
+        try {
+            const response = await fetch(design.url, { cache: 'no-store' });
+            if (!response.ok) throw new Error('unreadable');
+            const text = await response.text();
+            htmlBox.value = text;
+            sheetSaved = text;
+            $('saved-url').value = overlayAddress(design.url);
+            $('saved-row').hidden = false;
+        } catch (error) {
+            sheetError('That design could not be read back, but it is still saved.');
+        }
+    }
+
+    $('import').addEventListener('submit', async event => {
+        event.preventDefault();
+        const name = $('import-name').value.trim();
+        const html = htmlBox.value;
+        if (!name) {
+            sheetError('Give it a name so you can find it again.');
+            $('import-name').focus();
+            return;
+        }
+        if (!NAME_OK.test(name)) {
+            sheetError('Names can only have letters, numbers, spaces, - and _, up to 40 characters.');
+            return;
+        }
+        // The bridge keys a design on the file it will write: lower case, with runs
+        // of spaces turned into a single dash. Both the reserved-name check and the
+        // clash lookup below have to ask about that name and not the typed one, or
+        // neither of them ever matches a design whose name has a space in it.
+        const stem = name.toLowerCase().replace(/ +/g, '-');
+        if (stem === '_preview') {
+            sheetError('That name is kept for the preview. Pick another one.');
+            return;
+        }
+        if (!html.trim()) {
+            sheetError('Paste your page into the box first, or press Simple template.');
+            return;
+        }
+        if (tooBig(html)) {
+            sheetError('That page is over 1 MB, which is too big to save.');
+            return;
+        }
+        const clash = designs.find(design => design.name.toLowerCase() === stem);
+        if (clash && clash.name !== sheetSavedName && !confirm('There is already a design called ' + clash.name + '. Save over it?')) return;
+        await busy($('btn-design-save'), async () => {
+            const body = await api('/api/overlay', post({ name, html }));
+            sheetSaved = html;
+            sheetSavedName = body.overlay.name;
+            sheetError('');
+            $('saved-url').value = overlayAddress(body.overlay.url);
+            $('saved-row').hidden = false;
+            showPreview(body.overlay.url);
+            toast('Saved. Its address is in the list behind this window.');
+            await loadDesigns();
+        }, sheetError);
+    });
+
+    $('btn-import').addEventListener('click', () => openSheet($('btn-import')));
+
+    $('btn-template').addEventListener('click', () => {
+        openSheet($('btn-template'));
+        loadTemplate($('btn-template'));
+    });
+
+    // The backdrop carries this, not the wrapper: a click counts on the common
+    // parent of press and release, so selecting text and letting go outside the
+    // box would otherwise shut the window.
+    $('sheet-back').addEventListener('click', closeSheet);
+    $('btn-sheet-close').addEventListener('click', closeSheet);
+
+    $('btn-preview').addEventListener('click', () => previewNow($('btn-preview')));
+
+    $('btn-sheet-test').addEventListener('click', () => busy($('btn-sheet-test'), async () => {
+        await api('/api/test', post({}));
+        toast('Test gift sent.');
+    }, sheetError));
+
+    $('btn-saved-copy').addEventListener('click', () => copyField($('saved-url')));
+
+    $('btn-file').addEventListener('click', () => $('import-file').click());
+
+    $('import-file').addEventListener('change', async event => {
+        const input = event.target;
+        await readFile(input.files[0]);
+        // Cleared so picking the same file a second time still counts as a change.
+        input.value = '';
+    });
+
+    htmlBox.addEventListener('dragover', event => {
+        // Only for files, or dragging selected text into the box stops working.
+        if (![...event.dataTransfer.types].includes('Files')) return;
+        event.preventDefault();
+        htmlBox.classList.add('dropping');
+    });
+
+    htmlBox.addEventListener('dragleave', () => htmlBox.classList.remove('dropping'));
+
+    htmlBox.addEventListener('drop', event => {
+        if (![...event.dataTransfer.types].includes('Files')) return;
+        event.preventDefault();
+        htmlBox.classList.remove('dropping');
+        readFile(event.dataTransfer.files[0]);
+    });
+
+    window.addEventListener('resize', fitPreview);
+
+    /* ------------------------------------------------------- live gift stream */
+
+    function listen() {
+        const socket = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/tiktok?panel=1');
+        socket.addEventListener('message', event => {
+            let payload;
+            try { payload = JSON.parse(event.data); } catch { return; }
+            if (payload.type !== 'donation' || !payload.donation) return;
+            feed.prepend(giftRow({ ...payload.donation, at: new Date().toISOString() }));
+            while (feed.children.length > 25) feed.lastElementChild.remove();
+            const total = $('s-gifts');
+            total.textContent = Number(total.textContent || 0) + 1;
+        });
+        socket.addEventListener('close', () => setTimeout(listen, 2500));
+        socket.addEventListener('error', () => socket.close());
+    }
+
+    refresh();
+    listen();
+    loadDesigns();
+    setInterval(refresh, 3000);
+})();
+</script>
+</body>
+</html>

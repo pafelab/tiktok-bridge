@@ -1,0 +1,15 @@
+{
+    "tiktokUsername": "",
+    "port": 8899,
+    "minCoins": 1,
+    "amountMode": "coins",
+    "currency": "THB",
+    "coinValue": 0.35,
+    "messageTemplate": "{gift} ×{count}",
+    "useRecentComment": true,
+    "recentCommentWindowSeconds": 90,
+    "eyebrowText": "TikTok gift",
+    "showGiftIcon": true,
+    "signApiKey": "",
+    "openPanel": true
+}

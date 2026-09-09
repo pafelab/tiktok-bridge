@@ -412,6 +412,11 @@
           osc.start(startTime);
           osc.stop(startTime + 0.65);
         });
+
+        // Clean up audio routing after playback completes to prevent AudioNode leakage
+        setTimeout(() => {
+          try { masterGain.disconnect(); } catch (_) {}
+        }, 1000);
       } catch (err) {
         console.warn('[TikTok Alert] Audio synthesis error:', err);
       }
@@ -477,9 +482,10 @@
 
       // 6. Coin Badge
       if (donation.formatted_amount) {
-        coinBadge.textContent = donation.formatted_amount.includes('🪙')
-          ? donation.formatted_amount
-          : `🪙 ${donation.formatted_amount}`;
+        const formattedStr = String(donation.formatted_amount);
+        coinBadge.textContent = formattedStr.includes('🪙')
+          ? formattedStr
+          : `🪙 ${formattedStr}`;
         coinBadge.style.display = 'inline-flex';
       } else if (donation.giftCoins !== undefined && donation.giftCoins !== null && donation.giftCoins !== '') {
         coinBadge.textContent = `🪙 ${Number(donation.giftCoins).toLocaleString()} COINS`;
@@ -512,8 +518,12 @@
       cardEl.classList.remove('exiting');
       void cardEl.offsetWidth; // Force CSS reflow
 
-      // Populate DOM
-      renderDonation(donation);
+      // Safely populate DOM
+      try {
+        renderDonation(donation);
+      } catch (err) {
+        console.error('[TikTok Alert] Error rendering donation card:', err);
+      }
 
       // Play audio chime
       playChime();
@@ -606,8 +616,9 @@
 
     // ==========================================
     // Interactive & Testing Triggers
-    // ==========================================
+    // Keyboard test shortcut (Press 'T' to trigger a test gift alert)
     window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target?.tagName)) return;
       if (e.code === 'KeyT' || e.key === 't' || e.key === 'T') {
         getAudioContext();
         enqueueGift({
