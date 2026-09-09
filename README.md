@@ -53,6 +53,43 @@ this page. The bridge window always prints the exact URL when it starts.
 
 ## A design of your own
 
+### Panda Post gift alert
+
+The panda overlay includes a waving, blinking panda, bouncing gift illustrations,
+heart and bamboo-leaf particles, and a soft chime. Add this URL as an OBS browser
+source (820 × 500 recommended; it also scales to smaller sources):
+
+```
+http://localhost:8899/overlays/gift-alert.html
+```
+
+It stays transparent and empty between gifts. Open
+<http://localhost:8899/overlays/gift-alert.html?preview=1> for a playground with
+Panda, Rose, and Galaxy samples, a replay button, and a sound toggle. Preview mode
+uses sample gifts and does not connect to the live bridge. Press **T** in either
+mode to try an alert.
+
+URL options can be combined with `&`: `sound=0` mutes the chime, `volume=0.5`
+sets its volume, `duration=6` sets the alert duration in seconds (1–60), and
+`particles=0` turns off particles. Preview sound starts muted unless `sound=1`
+is supplied. The overlay respects the system's reduced-motion preference.
+
+### Panda Girl edition
+
+The **Panda Girl edition** uses an original SVG character in a panda hood and paw
+mittens, with blinking eyes and animated hair, bow, and waving paw:
+
+```
+http://localhost:8899/overlays/gift-alert-panda-girl.html
+```
+
+Add `?preview=1` to try it in the browser. It supports the same options as Panda
+Post above. The editable, transparent character drawing is in
+`overlays/assets/panda-girl.svg`; the overlay embeds its paths so it also works
+as a standalone HTML file.
+
+### Importing another design
+
 You are not stuck with the Black Swan cards. Press **Import HTML** under **Your own
 design** and paste an HTML page into the box — or press **Simple template** next to it
 to start from a small design that already works. The preview shows your page running
